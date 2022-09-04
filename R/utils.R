@@ -1,3 +1,35 @@
+# helper functions to parse expression
+parse_source <-  function(code, keep.source = FALSE) {
+  if (length(code) == 0) return(expression())
+  base::parse(text = code, keep.source = keep.source)
+}
+
+parse_data <- function(x) {
+  d = utils::getParseData(parse_source(x, TRUE))
+  d[d$terminal, ]
+}
+
+# helper function to replace pipes
+clean_pipe <- function(code) {
+  # flatten expression
+  code <- stringr::str_squish(code)
+
+  # grab locations of native pipe
+  locations <- data.table::data.table(parse_data(code))[token=='PIPE']
+
+  # collect indices of pipe occurrences
+  num = nrow(locations)
+  locs <- locations[, .(start=col1, stop=col2+1)]
+
+  # loop over indices and replace
+  for(i in 1:num) {
+    substr(code, locs$start[i], locs$stop[i]) <- '%>%'
+  }
+
+  # fix the annoying no-space b/w end of pipe and next verb
+  code <- gsub("%(?=[A-Za-z])", "% ", code, perl=TRUE)
+  return(code)
+}
 
 #' Pipe operator
 #'

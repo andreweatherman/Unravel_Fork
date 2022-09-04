@@ -53,6 +53,13 @@ invoke_unravel <- function(code, viewer = T) {
 #' }
 #' @export
 unravel <- function(code, viewer = T) {
+  # test for native pipe in code
+  if(grepl('\\|>', code) == TRUE) {
+    code <- clean_pipe(stringr::str_squish(code))
+  }
+  else {
+    code <- code
+  }
   # don't evaluate code yet
   code <- substitute(code)
   # check if we are at the last pipe function
@@ -85,6 +92,13 @@ unravel <- function(code, viewer = T) {
 #' }
 #' @export
 unravel_code <- function(code = "", viewer = T) {
+  # test for native pipe in code
+  if(grepl('\\|>', code) == TRUE) {
+    code <- clean_pipe(stringr::str_squish(code))
+  }
+  else {
+    code <- code
+  }
   invoke_unravel(code, viewer)
 }
 
@@ -95,6 +109,13 @@ unravel_code <- function(code = "", viewer = T) {
 unravel_addin <- function() {
   ec <- rstudioapi::getSourceEditorContext()
   selected <- ec$selection[[1]]$text
+  # test for native pipe in code
+  if(grepl('\\|>', selected) == TRUE)  {
+    selected <- clean_pipe(stringr::str_squish(selected))
+  }
+  else {
+    selected <- selected
+  }
   invoke_unravel(code = selected)
 }
 
