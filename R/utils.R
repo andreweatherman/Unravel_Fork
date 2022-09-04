@@ -1,49 +1,48 @@
-# helper functions to parse expression
-parse_source <-  function(code, keep.source = FALSE) {
+#' Parse source helper function
+#'
+#' @export
+parse_source <- function(code, keep.source = FALSE) {
   if (length(code) == 0) return(expression())
   base::parse(text = code, keep.source = keep.source)
 }
 
+#' Parse data helper function
+#'
+#' @export
 parse_data <- function(x) {
   d = utils::getParseData(parse_source(x, TRUE))
   d[d$terminal, ]
+  d <- d |> dplyr::as_tibble()
 }
 
-# helper function to replace pipes
+#' Clean pipe helper function
+#'
+#' This function substitutes the native pipe in place of the `magrittr` one
+#'
+#' @export
 clean_pipe <- function(code) {
+
   # flatten expression
   code <- stringr::str_squish(code)
 
+  # fucking data.table won't work so gotta use dplyr -- ugh
+
   # grab locations of native pipe
-  locations <- data.table::data.table(parse_data(code))[token=='PIPE']
+  locations <- parse_data(code) |> dplyr::as_tibble() |> dplyr::filter(token=='PIPE')
 
   # collect indices of pipe occurrences
-  num = nrow(locations)
-  locs <- locations[, .(start=col1, stop=col2+1)]
+  locs <- locations |> dplyr::select(col1, col2) |> dplyr::mutate(col2=col2+1)
 
   # loop over indices and replace
-  for(i in 1:num) {
-    substr(code, locs$start[i], locs$stop[i]) <- '%>%'
+  for(i in 1:nrow(locations)) {
+    substr(code, locs$col1[i], locs$col2[i]+1) <- '%>%'
   }
 
   # fix the annoying no-space b/w end of pipe and next verb
   code <- gsub("%(?=[A-Za-z])", "% ", code, perl=TRUE)
   return(code)
+
 }
-
-#' Pipe operator
-#'
-#' See \code{magrittr::\link[magrittr:pipe]{\%>\%}} for details.
-#'
-#' @name %>%
-#' @rdname pipe
-#' @keywords internal
-#' @export
-#' @importFrom magrittr %>%
-#' @usage lhs \%>\% rhs
-NULL
-
-### Function summaries-----
 
 # empty out the tidylog summary env initially
 tidylog_cache <- new.env(parent=emptyenv())
