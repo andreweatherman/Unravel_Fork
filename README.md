@@ -6,7 +6,7 @@ You can install it with:
 
 ```r
 # install.packages('devtools')
-devtools::install_github('andreweatherman/Unravel_Fork')
+devtools::install_github('andreweatherman/unravel_native')
 ```
 
 # Disclaimer:
